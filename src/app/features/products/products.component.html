@@ -1,0 +1,128 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Products</h1>
+      <p class="page-subtitle">Catalogue, stock levels and sales performance for <strong class="text-body">{{ ranges.label().toLowerCase() }}</strong></p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-soft" (click)="export('csv')" [disabled]="!filtered().length"><i class="bi bi-filetype-csv" aria-hidden="true"></i>CSV</button>
+      <button type="button" class="btn btn-soft" (click)="export('xlsx')" [disabled]="!filtered().length"><i class="bi bi-file-earmark-excel" aria-hidden="true"></i>Excel</button>
+    </div>
+  </div>
+
+  <div class="row g-3 section-gap">
+    <div class="col-6 col-lg-3"><div class="mini-stat card-like"><div class="label">Products</div><div class="value tabular">{{ summary().total }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="mini-stat card-like"><div class="label">Active</div><div class="value tabular">{{ summary().active }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="mini-stat card-like"><div class="label">Low / out of stock</div><div class="value tabular">{{ summary().low }}</div></div></div>
+    <div class="col-6 col-lg-3"><div class="mini-stat card-like"><div class="label">Stock value</div><div class="value tabular">{{ summary().stockValue | currency: 'INR' : 'symbol' : '1.0-0' }}</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="d-flex flex-wrap gap-2 align-items-center p-3 border-bottom">
+      <div class="input-icon flex-grow-1" style="max-width: 360px">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <label for="product-search" class="visually-hidden">Search products</label>
+        <input id="product-search" type="search" class="form-control" placeholder="Search products or categories"
+               [ngModel]="search()" (ngModelChange)="setFilter(search.set, $event)" />
+      </div>
+      <div class="d-flex flex-wrap gap-2 ms-md-auto">
+        <label for="product-category" class="visually-hidden">Category</label>
+        <select id="product-category" class="form-select w-auto" [ngModel]="category()" (ngModelChange)="setFilter(category.set, $event)">
+          <option value="">All categories</option>
+          @for (c of categories(); track c) { <option [value]="c">{{ c }}</option> }
+        </select>
+        <label for="product-stock" class="visually-hidden">Stock status</label>
+        <select id="product-stock" class="form-select w-auto" [ngModel]="stockFilter()" (ngModelChange)="setFilter(stockFilter.set, $event)">
+          <option value="">All products</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="low">Low / out of stock</option>
+        </select>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="alert alert-danger m-3 d-flex align-items-center justify-content-between gap-3" role="alert">
+        <span><i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ error() }}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" (click)="load()">Retry</button>
+      </div>
+    }
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            @for (col of columns; track col.key) {
+              <th scope="col" [class.num]="col.num" [attr.aria-sort]="ariaSort(col.key)">
+                <button type="button" class="sort-btn" [class.active]="sortKey() === col.key" (click)="sort(col.key)">
+                  {{ col.label }}
+                  <i class="bi" aria-hidden="true" [class.bi-arrow-down-up]="sortKey() !== col.key"
+                     [class.bi-arrow-up]="sortKey() === col.key && sortDir() === 1"
+                     [class.bi-arrow-down]="sortKey() === col.key && sortDir() === -1"></i>
+                </button>
+              </th>
+            }
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (loading() && !products().length) {
+            @for (i of [1, 2, 3, 4, 5]; track i) {
+              <tr aria-hidden="true"><td colspan="7"><div class="skeleton" style="height: 22px"></div></td></tr>
+            }
+          }
+          @for (p of pageRows(); track p._id) {
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="avatar" style="border-radius: 10px" aria-hidden="true"><i class="bi bi-box-seam"></i></span>
+                  <span class="cell-primary">{{ p.name }}</span>
+                </div>
+              </td>
+              <td><span class="pill">{{ p.category }}</span></td>
+              <td class="num">{{ p.price | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+              <td class="num">
+                <span [class.text-danger]="p.stockState !== 'ok'" [class.fw-semibold]="p.stockState !== 'ok'">{{ p.stock }}</span>
+              </td>
+              <td class="num">{{ p.units | number }}</td>
+              <td class="num" style="min-width: 160px">
+                <div class="fw-semibold">{{ p.revenue | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+                <div class="meter mt-1"><span [style.width.%]="(p.revenue / maxRevenue()) * 100"></span></div>
+              </td>
+              <td>
+                @if (!p.isActive) {
+                  <span class="pill"><i class="bi bi-slash-circle" aria-hidden="true"></i>Inactive</span>
+                } @else if (p.stockState === 'out') {
+                  <span class="pill pill-danger"><i class="bi bi-x-circle-fill" aria-hidden="true"></i>Out of stock</span>
+                } @else if (p.stockState === 'low') {
+                  <span class="pill pill-warning"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>Low stock</span>
+                } @else {
+                  <span class="pill pill-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>In stock</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            @if (!loading()) {
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <span class="empty-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+                    @if (products().length) {
+                      <strong>No products match your filters</strong>
+                    } @else {
+                      <strong>No products in the catalogue</strong>
+                      Add products to the <code>products</code> collection in the salesDashboard database.
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pager [page]="page()" [pageSize]="pageSize()" [total]="filtered().length" label="Products pagination"
+               (pageChange)="page.set($event)" (pageSizeChange)="setPageSize($event)" />
+  </div>
+</div>

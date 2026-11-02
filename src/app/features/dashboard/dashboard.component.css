@@ -1,0 +1,382 @@
+.skeleton-card {
+  height: 138px;
+  padding: 1rem;
+}
+
+.skeleton-chart {
+  height: 380px;
+  padding: 1.25rem;
+}
+
+/* Trend */
+.trend-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.trend-total {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.trend-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.trend-delta.up {
+  color: var(--sd-success);
+}
+
+.trend-delta.down {
+  color: var(--sd-danger);
+}
+
+/* Category donut */
+.donut-wrap {
+  position: relative;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donut-label {
+  font-size: 0.72rem;
+  color: var(--sd-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.donut-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.cat-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  font-size: 0.83rem;
+}
+
+.cat-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--sd-border);
+}
+
+.cat-list li:first-child {
+  border-top: 0;
+}
+
+.cat-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-value {
+  font-weight: 600;
+}
+
+.cat-share {
+  width: 3.2rem;
+  text-align: right;
+  color: var(--sd-muted);
+}
+
+/* Target */
+.target-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.target-ring {
+  --p: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--sd-primary) calc(var(--p) * 1%), var(--sd-hover) 0);
+  position: relative;
+}
+
+.target-ring::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--sd-surface);
+}
+
+.target-ring span {
+  position: relative;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.target-title {
+  font-size: 0.75rem;
+  color: var(--sd-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.target-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.target-empty {
+  padding: 2rem 0.5rem;
+}
+
+.target-form {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 360px;
+  margin: 1rem auto 0;
+}
+
+/* Lists */
+.bar-list,
+.status-list,
+.people {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bar-list li + li {
+  margin-top: 1rem;
+}
+
+.bar-list-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+
+.bar-list .cell-sub {
+  margin-top: 0.3rem;
+}
+
+.status-bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--sd-hover);
+  margin: 0.25rem 0 1rem;
+}
+
+.status-bar span {
+  display: block;
+  height: 100%;
+  transition: width 0.6s var(--sd-ease);
+}
+
+.status-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0;
+  font-size: 0.85rem;
+  border-top: 1px solid var(--sd-border);
+}
+
+.status-list li:first-child {
+  border-top: 0;
+}
+
+.status-list .share {
+  width: 2.75rem;
+  text-align: right;
+}
+
+.people li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0;
+  font-size: 0.85rem;
+  border-top: 1px solid var(--sd-border);
+}
+
+.people li:first-child {
+  border-top: 0;
+  padding-top: 0.2rem;
+}
+
+/* Top products table */
+.tp-wrap {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--sd-border);
+  border-radius: var(--sd-radius-sm);
+}
+
+.tp {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tp th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.65rem 0.9rem;
+  background: var(--sd-surface-2);
+  color: var(--sd-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: left;
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.tp th i {
+  margin-right: 0.4rem;
+  color: var(--sd-primary-text);
+}
+
+.tp td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--sd-border);
+  vertical-align: middle;
+}
+
+.tp tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tp tbody tr {
+  transition: background 0.15s;
+}
+
+.tp tbody tr:hover {
+  background: var(--sd-hover);
+}
+
+.tp .num {
+  text-align: right;
+}
+
+.rank-col {
+  width: 3rem;
+  text-align: center !important;
+}
+
+.rank-num {
+  color: var(--sd-muted);
+  font-weight: 600;
+}
+
+.medal {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+}
+
+.medal.gold {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.medal.silver {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.medal.bronze {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+:host-context([data-bs-theme='dark']) .medal.gold {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.18);
+}
+
+:host-context([data-bs-theme='dark']) .medal.silver {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.2);
+}
+
+:host-context([data-bs-theme='dark']) .medal.bronze {
+  color: #fdba74;
+  background: rgba(234, 88, 12, 0.2);
+}
+
+.share-col {
+  width: 24%;
+  min-width: 140px;
+}
+
+.share-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.share-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sd-hover);
+  overflow: hidden;
+}
+
+.share-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sd-gradient);
+  transition: width 0.5s var(--sd-ease);
+}
+
+.share-pct {
+  width: 3rem;
+  text-align: right;
+  color: var(--sd-muted);
+  font-size: 0.78rem;
+}

@@ -1,0 +1,67 @@
+<div class="shell" [class.collapsed]="collapsed()">
+  <aside class="sidebar" [class.open]="mobileOpen()" aria-label="Main navigation">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i class="bi bi-bar-chart-fill"></i></span>
+      <span class="brand-text">Sales<span>Desk</span></span>
+    </div>
+
+    <nav class="nav-scroll">
+      @for (group of navGroups; track group.label) {
+        <div class="nav-group">
+          <div class="nav-group-label">{{ group.label }}</div>
+          @for (item of group.items; track item.path) {
+            @if (item.soon) {
+              <span class="nav-item disabled" [attr.title]="item.label + ' — coming soon'" aria-disabled="true">
+                <i class="bi {{ item.icon }}" aria-hidden="true"></i>
+                <span class="nav-text">{{ item.label }}</span>
+                <span class="soon">Soon</span>
+              </span>
+            } @else {
+              <a class="nav-item" [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page"
+                 [attr.title]="collapsed() ? item.label : null" (click)="closeMobile()">
+                <i class="bi {{ item.icon }}" aria-hidden="true"></i>
+                <span class="nav-text">{{ item.label }}</span>
+              </a>
+            }
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="sidebar-foot">
+      <a class="nav-item" routerLink="/settings" routerLinkActive="active" ariaCurrentWhenActive="page"
+         [attr.title]="collapsed() ? 'Settings' : null" (click)="closeMobile()">
+        <i class="bi bi-gear" aria-hidden="true"></i>
+        <span class="nav-text">Settings</span>
+      </a>
+
+      <div class="user-card">
+        <span class="avatar user-avatar" aria-hidden="true">SA</span>
+        <div class="user-meta min-w-0">
+          <div class="user-name">Sales Admin</div>
+          <div class="user-sub"><span class="live-dot" aria-hidden="true"></span>MongoDB Atlas</div>
+        </div>
+      </div>
+
+      <button type="button" class="collapse-btn d-none d-lg-flex" (click)="toggleSidebar()"
+              [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+              [attr.title]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'">
+        <i class="bi" [class.bi-chevron-double-left]="!collapsed()" [class.bi-chevron-double-right]="collapsed()" aria-hidden="true"></i>
+        <span class="nav-text">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  @if (mobileOpen()) {
+    <div class="sidebar-backdrop" (click)="closeMobile()" aria-hidden="true"></div>
+  }
+
+  <div class="main">
+    <app-topbar (menuToggle)="toggleSidebar()" />
+    <main class="content" id="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<app-notification />

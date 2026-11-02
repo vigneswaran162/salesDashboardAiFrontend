@@ -1,0 +1,336 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">
+        Sales performance for <strong class="text-body">{{ ranges.label().toLowerCase() }}</strong>
+        @if (analytics.lastUpdated()) {
+          <span> · updated {{ analytics.lastUpdated() | date: 'shortTime' }}</span>
+        }
+      </p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-soft" (click)="refresh()" [disabled]="loading()">
+        <i class="bi bi-arrow-clockwise" [class.spin]="loading()" aria-hidden="true"></i>Refresh
+      </button>
+      <a routerLink="/sales" class="btn btn-primary">
+        <i class="bi bi-receipt" aria-hidden="true"></i>Manage Sales
+      </a>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-3" role="alert">
+      <span><i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ error() }}</span>
+      <button type="button" class="btn btn-sm btn-outline-danger" (click)="refresh()">Retry</button>
+    </div>
+  }
+
+  @if (!ready()) {
+    <!-- Skeleton while the first load is in flight -->
+    <div class="row g-3 section-gap" aria-hidden="true">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="col-12 col-sm-6 col-xl-4 col-xxl-2"><div class="card skeleton-card"><div class="skeleton h-100"></div></div></div>
+      }
+    </div>
+    <div class="row g-3" aria-hidden="true">
+      <div class="col-12 col-xl-8"><div class="card skeleton-chart"><div class="skeleton h-100"></div></div></div>
+      <div class="col-12 col-xl-4"><div class="card skeleton-chart"><div class="skeleton h-100"></div></div></div>
+    </div>
+    <span class="visually-hidden" role="status">Loading dashboard…</span>
+  } @else {
+    <div [class.refreshing]="loading()">
+      <!-- KPIs -->
+      <div class="row g-3 section-gap">
+        @for (k of kpiCards(); track k.label) {
+          <div class="col-12 col-sm-6 col-xl-4 col-xxl-2">
+            <app-kpi-card [label]="k.label" [value]="k.value" [icon]="k.icon" [tone]="k.tone" [delta]="k.delta"
+                          [hint]="k.hint" [sparkline]="k.spark" [deltaLabel]="ranges.comparisonLabel()" />
+          </div>
+        }
+      </div>
+
+      <!-- Trend + category -->
+      <div class="row g-3 section-gap">
+        <div class="col-12 col-xl-8">
+          <app-panel title="Sales Trend" [subtitle]="metric() === 'revenue' ? 'Completed-sales revenue over time' : 'Orders placed over time'">
+            <div panel-actions class="d-flex flex-wrap gap-2">
+              <app-view-toggle [(view)]="trendView" label="Sales trend display" />
+              <div class="segmented" role="group" aria-label="Metric">
+                <button type="button" [class.active]="metric() === 'revenue'" (click)="metric.set('revenue')">Revenue</button>
+                <button type="button" [class.active]="metric() === 'orders'" (click)="metric.set('orders')">Orders</button>
+              </div>
+              <div class="segmented" role="group" aria-label="Granularity">
+                <button type="button" [class.active]="activeGranularity() === 'day'" (click)="granularity.set('day')">Daily</button>
+                <button type="button" [class.active]="activeGranularity() === 'week'" (click)="granularity.set('week')">Weekly</button>
+                <button type="button" [class.active]="activeGranularity() === 'month'" (click)="granularity.set('month')">Monthly</button>
+              </div>
+            </div>
+
+            <div class="trend-head">
+              <div>
+                <div class="trend-total">{{ trendTotal() }}</div>
+                @if (trendDelta() !== null) {
+                  <span class="trend-delta" [class.up]="trendDelta()! >= 0" [class.down]="trendDelta()! < 0">
+                    <i class="bi" [class.bi-arrow-up-right]="trendDelta()! >= 0" [class.bi-arrow-down-right]="trendDelta()! < 0" aria-hidden="true"></i>
+                    {{ trendDelta()! >= 0 ? '+' : '' }}{{ trendDelta() | number: '1.0-1' }}% vs previous period
+                  </span>
+                }
+              </div>
+              @if (hasPrevious()) {
+                <div class="legend">
+                  <span class="legend-item"><span class="legend-swatch line" style="background: var(--sd-primary)"></span>This period</span>
+                  <span class="legend-item"><span class="legend-swatch line dashed"></span>Previous period</span>
+                </div>
+              }
+            </div>
+
+            @if (kpis().orders) {
+              @if (trendView() === 'chart') {
+                <app-chart [config]="trendConfig()" [height]="300" ariaLabel="Sales trend chart for the selected period" />
+              } @else {
+                <app-trend-table [points]="trendPoints()" [previous]="trendPrevPoints()" [metric]="metric()" />
+              }
+            } @else {
+              <div class="empty-state"><span class="empty-icon"><i class="bi bi-graph-up"></i></span><strong>No sales in this period</strong>Try a wider date range.</div>
+            }
+          </app-panel>
+        </div>
+
+        <div class="col-12 col-xl-4">
+          <app-panel title="Sales by Category" subtitle="Share of completed-sales revenue">
+            @if (categories().length) {
+              <div class="donut-wrap">
+                <app-chart [config]="$any(categoryConfig())" [height]="210" ariaLabel="Doughnut chart of revenue by category" />
+                <div class="donut-center" aria-hidden="true">
+                  <span class="donut-label">Revenue</span>
+                  <span class="donut-value">{{ kpis().revenue | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+                </div>
+              </div>
+              <ul class="cat-list">
+                @for (c of categories(); track c.category) {
+                  <li>
+                    <span class="legend-swatch" [style.background]="c.color" aria-hidden="true"></span>
+                    <span class="cat-name">{{ c.category }}</span>
+                    <span class="cat-value tabular">{{ c.revenue | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+                    <span class="cat-share tabular">{{ c.share | number: '1.0-1' }}%</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="empty-state"><span class="empty-icon"><i class="bi bi-pie-chart"></i></span>No completed sales in this period.</div>
+            }
+          </app-panel>
+        </div>
+      </div>
+
+      <!-- Top products + target -->
+      <div class="row g-3 section-gap">
+        <div class="col-12 col-xl-7">
+          <app-panel title="Top 10 Best-Selling Products" subtitle="Ranked by completed-sales revenue">
+            <div panel-actions class="d-flex align-items-center gap-2">
+              <app-view-toggle [(view)]="productsView" label="Top products display" />
+              <a routerLink="/products" class="btn btn-sm btn-ghost">All products <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            @if (topProducts().length) {
+              @if (productsView() === 'chart') {
+                <app-chart [config]="topProductsConfig()" [height]="Math.max(220, topProducts().length * 34)"
+                           ariaLabel="Horizontal bar chart of top products by revenue" />
+              } @else {
+                <div class="tp-wrap">
+                  <table class="tp">
+                    <thead>
+                      <tr>
+                        <th class="rank-col">#</th>
+                        <th><i class="bi bi-box-seam" aria-hidden="true"></i>Product</th>
+                        <th class="d-none d-md-table-cell"><i class="bi bi-tag" aria-hidden="true"></i>Category</th>
+                        <th class="num"><i class="bi bi-box2" aria-hidden="true"></i>Units</th>
+                        <th class="num d-none d-sm-table-cell"><i class="bi bi-bag-check" aria-hidden="true"></i>Orders</th>
+                        <th class="num"><i class="bi bi-currency-rupee" aria-hidden="true"></i>Revenue</th>
+                        <th class="share-col d-none d-lg-table-cell"><i class="bi bi-pie-chart" aria-hidden="true"></i>Share</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (p of topProductRows(); track p.productId) {
+                        <tr>
+                          <td class="rank-col">
+                            @if (p.rank <= 3) {
+                              <span class="medal" [class.gold]="p.rank === 1" [class.silver]="p.rank === 2" [class.bronze]="p.rank === 3"
+                                    [attr.aria-label]="'Rank ' + p.rank"><i class="bi bi-trophy-fill" aria-hidden="true"></i></span>
+                            } @else {
+                              <span class="rank-num">{{ p.rank }}</span>
+                            }
+                          </td>
+                          <td class="cell-primary">{{ p.productName }}</td>
+                          <td class="d-none d-md-table-cell"><span class="pill">{{ p.category }}</span></td>
+                          <td class="num">{{ p.units }}</td>
+                          <td class="num d-none d-sm-table-cell">{{ p.orders }}</td>
+                          <td class="num fw-semibold">{{ p.revenue | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+                          <td class="share-col d-none d-lg-table-cell">
+                            <div class="share-cell">
+                              <span class="share-bar" aria-hidden="true"><span [style.width.%]="p.bar"></span></span>
+                              <span class="share-pct">{{ p.share | number: '1.0-1' }}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            } @else {
+              <div class="empty-state"><span class="empty-icon"><i class="bi bi-trophy"></i></span>No completed sales in this period.</div>
+            }
+          </app-panel>
+        </div>
+
+        <div class="col-12 col-xl-5">
+          <app-panel title="Target vs Achievement" subtitle="Monthly completed revenue against your goal">
+            @if (target()) {
+              <a panel-actions routerLink="/settings" class="btn btn-sm btn-ghost" title="Change target"><i class="bi bi-sliders" aria-hidden="true"></i>Edit</a>
+            }
+            @if (target(); as goal) {
+              <div class="target-summary">
+                <div class="target-ring" [style.--p]="Math.min(targetProgress(), 100)" role="img"
+                     [attr.aria-label]="(targetProgress() | number: '1.0-0') + '% of this month\'s target'">
+                  <span class="tabular">{{ targetProgress() | number: '1.0-0' }}%</span>
+                </div>
+                <div class="min-w-0">
+                  <div class="target-title">{{ currentMonth()?.label }}</div>
+                  <div class="target-value">{{ currentMonth()?.revenue ?? 0 | currency: 'INR' : 'symbol' : '1.0-0' }}
+                    <span class="text-secondary fw-normal">/ {{ goal | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+                  </div>
+                  <div class="small text-secondary">Target met in {{ monthsHit() }} of {{ monthly().length }} months shown</div>
+                </div>
+              </div>
+              <div class="legend mb-2">
+                <span class="legend-item"><span class="legend-swatch" style="background: var(--sd-primary)"></span>Met target</span>
+                <span class="legend-item"><span class="legend-swatch" style="background: var(--sd-primary); opacity: .45"></span>Below target</span>
+                <span class="legend-item"><span class="legend-swatch line dashed"></span>Target</span>
+              </div>
+              @if (targetConfig(); as cfg) {
+                <app-chart [config]="cfg" [height]="200" ariaLabel="Monthly revenue compared with the monthly target" />
+              }
+            } @else {
+              <div class="empty-state target-empty">
+                <span class="empty-icon"><i class="bi bi-bullseye"></i></span>
+                <strong>Set a monthly revenue target</strong>
+                Track each month's completed revenue against a goal. Saved in this browser.
+                <form class="target-form" (ngSubmit)="saveTarget()">
+                  <label for="target-input" class="visually-hidden">Monthly revenue target in rupees</label>
+                  <div class="input-icon flex-grow-1">
+                    <i class="bi bi-currency-rupee" aria-hidden="true"></i>
+                    <input id="target-input" type="number" min="1" step="1000" class="form-control" name="target"
+                           [(ngModel)]="targetInput" placeholder="e.g. 300000" />
+                  </div>
+                  <button type="submit" class="btn btn-primary" [disabled]="!targetInput || targetInput <= 0">Set target</button>
+                </form>
+              </div>
+            }
+          </app-panel>
+        </div>
+      </div>
+
+      <!-- Payment / status / customers -->
+      <div class="row g-3 section-gap">
+        <div class="col-12 col-md-6 col-xl-4">
+          <app-panel title="Payment Methods" subtitle="Share of orders">
+            <ul class="bar-list">
+              @for (p of payments(); track p.paymentMethod) {
+                <li>
+                  <div class="bar-list-row">
+                    <span class="fw-medium">{{ p.paymentMethod }}</span>
+                    <span class="tabular text-secondary">{{ p.orders }} · <span class="text-body fw-semibold">{{ p.share | number: '1.0-0' }}%</span></span>
+                  </div>
+                  <div class="meter"><span [style.width.%]="p.share"></span></div>
+                  <div class="cell-sub tabular">{{ p.revenue | currency: 'INR' : 'symbol' : '1.0-0' }} revenue</div>
+                </li>
+              }
+            </ul>
+          </app-panel>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+          <app-panel title="Order Status" subtitle="All orders in this period">
+            <div class="status-bar" role="img" aria-label="Orders by status">
+              @for (s of statuses(); track s.status) {
+                @if (s.orders) {
+                  <span [style.width.%]="s.share" [style.background]="s.color" [attr.title]="s.status + ': ' + s.orders"></span>
+                }
+              }
+            </div>
+            <ul class="status-list">
+              @for (s of statuses(); track s.status) {
+                <li>
+                  <i class="bi {{ s.icon }}" [style.color]="s.color" aria-hidden="true"></i>
+                  <span class="fw-medium">{{ s.status }}</span>
+                  <span class="ms-auto tabular fw-semibold">{{ s.orders }}</span>
+                  <span class="tabular text-secondary share">{{ s.share | number: '1.0-0' }}%</span>
+                </li>
+              }
+            </ul>
+            <div class="mini-stat mt-3">
+              <div class="label">Pending value</div>
+              <div class="value tabular">{{ kpis().pendingValue | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+            </div>
+          </app-panel>
+        </div>
+
+        <div class="col-12 col-xl-4">
+          <app-panel title="Top Customers" subtitle="By completed spend">
+            <a panel-actions routerLink="/customers" class="btn btn-sm btn-ghost">View all <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            @if (topCustomers().length) {
+              <ul class="people">
+                @for (c of topCustomers(); track c.key; let i = $index) {
+                  <li>
+                    <span class="avatar">{{ c.initials }}</span>
+                    <div class="min-w-0 flex-grow-1">
+                      <div class="cell-primary text-truncate">{{ c.name }}</div>
+                      <div class="cell-sub text-truncate">{{ c.orders }} {{ c.orders === 1 ? 'order' : 'orders' }} · {{ c.email }}</div>
+                    </div>
+                    <span class="tabular fw-semibold">{{ c.spent | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="empty-state"><span class="empty-icon"><i class="bi bi-people"></i></span>No customers in this period.</div>
+            }
+          </app-panel>
+        </div>
+      </div>
+
+      <!-- Recent sales (latest overall, from the dashboard API) -->
+      <app-panel title="Recent Sales" [subtitle]="'Latest 5 of ' + (summary()?.totalSales ?? 0) + ' total sales'" [flush]="true">
+        <a panel-actions routerLink="/sales" class="btn btn-sm btn-outline-primary">View all <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        @if (recentSales().length) {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Invoice</th><th>Customer</th><th>Product</th><th class="num">Qty</th>
+                  <th class="num">Total</th><th>Payment</th><th>Date</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sale of recentSales(); track sale._id) {
+                  <tr>
+                    <td><span class="invoice-link">{{ sale.invoiceNumber }}</span></td>
+                    <td class="cell-primary">{{ sale.customerName }}</td>
+                    <td>{{ sale.productName }}</td>
+                    <td class="num">{{ sale.quantity }}</td>
+                    <td class="num fw-semibold">{{ sale.totalAmount | currency: 'INR' }}</td>
+                    <td><span class="pill">{{ sale.paymentMethod }}</span></td>
+                    <td class="text-nowrap text-secondary">{{ sale.saleDate | date: 'dd MMM yyyy' : 'UTC' }}</td>
+                    <td><app-status-badge [status]="sale.status" /></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="empty-state"><span class="empty-icon"><i class="bi bi-inbox"></i></span>No sales recorded yet.</div>
+        }
+      </app-panel>
+    </div>
+  }
+</div>

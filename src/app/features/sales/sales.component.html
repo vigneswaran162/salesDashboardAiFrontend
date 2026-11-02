@@ -1,0 +1,201 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Sales</h1>
+      <p class="page-subtitle">Create, search and manage sales transactions</p>
+    </div>
+    <div class="page-actions">
+      <div class="position-relative" (appClickOutside)="exportMenuOpen.set(false)">
+        <button type="button" class="btn btn-soft" (click)="exportMenuOpen.set(!exportMenuOpen())" [disabled]="exporting()"
+                aria-haspopup="menu" [attr.aria-expanded]="exportMenuOpen()">
+          @if (exporting()) {
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>Exporting…
+          } @else {
+            <i class="bi bi-download" aria-hidden="true"></i>Export
+          }
+        </button>
+        @if (exportMenuOpen()) {
+          <div class="menu export-menu" role="menu">
+            <div class="menu-label">{{ pagination().total }} matching sales</div>
+            <button type="button" class="menu-item" role="menuitem" (click)="exportSales('xlsx')">
+              <i class="bi bi-file-earmark-excel"></i>Excel (.xlsx)
+            </button>
+            <button type="button" class="menu-item" role="menuitem" (click)="exportSales('csv')">
+              <i class="bi bi-filetype-csv"></i>CSV (.csv)
+            </button>
+          </div>
+        }
+      </div>
+      <button type="button" class="btn btn-primary" (click)="openCreate()">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i>Add New Sale
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <!-- Toolbar / filters -->
+    <form class="toolbar" [formGroup]="filters" (ngSubmit)="$event.preventDefault()">
+      <div class="input-icon toolbar-search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <label for="search" class="visually-hidden">Search</label>
+        <input id="search" type="search" class="form-control" formControlName="search"
+               placeholder="Search customer name or invoice number" autocomplete="off" />
+      </div>
+      <div class="toolbar-filters">
+        <div>
+          <label for="filterStatus" class="visually-hidden">Status</label>
+          <select id="filterStatus" class="form-select" formControlName="status">
+            <option value="">All statuses</option>
+            @for (s of statuses; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label for="filterPayment" class="visually-hidden">Payment method</label>
+          <select id="filterPayment" class="form-select" formControlName="paymentMethod">
+            <option value="">All payments</option>
+            @for (m of paymentMethods; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
+          </select>
+        </div>
+        <div class="date-pair">
+          <label for="startDate" class="visually-hidden">From date</label>
+          <input id="startDate" type="date" class="form-control" formControlName="startDate"
+                 [max]="filters.controls.endDate.value || null" title="From date" />
+          <span class="text-secondary" aria-hidden="true">→</span>
+          <label for="endDate" class="visually-hidden">To date</label>
+          <input id="endDate" type="date" class="form-control" formControlName="endDate"
+                 [min]="filters.controls.startDate.value || null" title="To date" />
+        </div>
+        @if (hasActiveFilters()) {
+          <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">
+            <i class="bi bi-x-circle" aria-hidden="true"></i>Clear ({{ activeFilterCount() }})
+          </button>
+        }
+      </div>
+    </form>
+
+    @if (error()) {
+      <div class="alert alert-danger mx-3 mb-3 d-flex align-items-center justify-content-between gap-3" role="alert">
+        <span><i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ error() }}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger" (click)="retry()">Retry</button>
+      </div>
+    }
+
+    <div class="table-wrapper">
+      @if (loading()) {
+        <div class="loading-bar" role="status"><span class="visually-hidden">Loading…</span></div>
+      }
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle sales-table" [class.is-loading]="loading()">
+          <thead>
+            <tr>
+              @for (col of columns; track col.key) {
+                <th scope="col" [class.num]="col.align === 'end'" [attr.aria-sort]="ariaSort(col.key)">
+                  <button type="button" class="sort-btn" [class.active]="sortBy() === col.key" (click)="sort(col.key)">
+                    {{ col.label }}
+                    <i class="bi" aria-hidden="true"
+                       [class.bi-arrow-down-up]="sortBy() !== col.key"
+                       [class.bi-arrow-up]="sortBy() === col.key && sortOrder() === 'asc'"
+                       [class.bi-arrow-down]="sortBy() === col.key && sortOrder() === 'desc'"></i>
+                  </button>
+                </th>
+              }
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of sales(); track sale._id) {
+              <tr>
+                <td><button type="button" class="invoice-link btn-reset" (click)="view(sale)">{{ sale.invoiceNumber }}</button></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="avatar d-none d-xl-inline-grid" aria-hidden="true">{{ initials(sale.customerName) }}</span>
+                    <div class="min-w-0">
+                      <div class="cell-primary text-nowrap">{{ sale.customerName }}</div>
+                      <div class="cell-sub d-none d-xxl-block">{{ sale.customerEmail }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="text-nowrap">{{ sale.productName }}</div>
+                  <div class="cell-sub">{{ sale.category }}</div>
+                </td>
+                <td class="num">{{ sale.quantity }}</td>
+                <td class="num text-nowrap">{{ sale.unitPrice | currency: 'INR' }}</td>
+                <td class="num text-nowrap" [class.text-secondary]="!sale.discount">
+                  {{ sale.discount ? '−' + (sale.discount | currency: 'INR') : '—' }}
+                </td>
+                <td class="num text-nowrap fw-semibold">{{ sale.totalAmount | currency: 'INR' }}</td>
+                <td><span class="pill">{{ sale.paymentMethod }}</span></td>
+                <td class="text-nowrap text-secondary">{{ sale.saleDate | date: 'dd MMM yyyy' : 'UTC' }}</td>
+                <td><app-status-badge [status]="sale.status" /></td>
+                <td class="text-end">
+                  <div class="row-actions" role="group" [attr.aria-label]="'Actions for ' + sale.invoiceNumber">
+                    <button type="button" class="row-action" title="View" (click)="view(sale)">
+                      <i class="bi bi-eye" aria-hidden="true"></i><span class="visually-hidden">View</span>
+                    </button>
+                    <button type="button" class="row-action primary" title="Edit" (click)="openEdit(sale)">
+                      <i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">Edit</span>
+                    </button>
+                    <button type="button" class="row-action danger" title="Delete" (click)="confirmDelete(sale)">
+                      <i class="bi bi-trash3" aria-hidden="true"></i><span class="visually-hidden">Delete</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              @if (!loading() && !error()) {
+                <tr>
+                  <td [attr.colspan]="columns.length + 1">
+                    <div class="empty-state">
+                      <span class="empty-icon"><i class="bi bi-inbox" aria-hidden="true"></i></span>
+                      @if (hasActiveFilters()) {
+                        <strong>No sales match your filters</strong>
+                        <button type="button" class="btn btn-link btn-sm" (click)="clearFilters()">Clear filters</button>
+                      } @else {
+                        <strong>No sales yet</strong>
+                        Click <strong class="d-inline">Add New Sale</strong> to create one.
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @else if (loading()) {
+                @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+                  <tr aria-hidden="true">
+                    <td [attr.colspan]="columns.length + 1"><div class="skeleton" style="height: 22px"></div></td>
+                  </tr>
+                }
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-pager [page]="pagination().page" [pageSize]="limit()" [total]="pagination().total" [pageSizes]="pageSizes"
+               label="Sales pagination" (pageChange)="goToPage($event)" (pageSizeChange)="changePageSize($event)" />
+  </div>
+</div>
+
+@if (formOpen()) {
+  <app-sales-form [sale]="editingSale()" [products]="products()" (saved)="onSaved()" (cancelled)="closeForm()" />
+}
+
+@if (viewingSale(); as sale) {
+  <app-sale-details [sale]="sale" (closed)="viewingSale.set(null)" (edit)="openEdit($event)" />
+}
+
+@if (deletingSale(); as sale) {
+  <app-confirmation-dialog
+    title="Delete sale?"
+    [message]="'Invoice ' + sale.invoiceNumber + ' for ' + sale.customerName + ' will be permanently deleted. This cannot be undone.'"
+    confirmText="Delete"
+    variant="danger"
+    [busy]="deleting()"
+    (confirmed)="deleteSale()"
+    (cancelled)="cancelDelete()" />
+}

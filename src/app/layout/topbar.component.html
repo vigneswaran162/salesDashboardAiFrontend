@@ -1,0 +1,107 @@
+<header class="topbar">
+  <button type="button" class="btn btn-ghost btn-icon d-lg-none" (click)="menuToggle.emit()" aria-label="Open navigation">
+    <i class="bi bi-list fs-5" aria-hidden="true"></i>
+  </button>
+
+  <nav class="crumbs min-w-0" aria-label="Breadcrumb">
+    <ol>
+      <li class="d-none d-sm-flex">SalesDesk</li>
+      @if (meta().section) {
+        <li class="d-none d-md-flex">{{ meta().section }}</li>
+      }
+      <li class="current" aria-current="page">{{ meta().heading }}</li>
+    </ol>
+  </nav>
+
+  <form class="search d-none d-md-block" role="search" (ngSubmit)="search()">
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <label for="global-search" class="visually-hidden">Search sales by customer or invoice</label>
+    <input #searchInput id="global-search" type="search" name="q" class="form-control" [(ngModel)]="searchTerm"
+           placeholder="Search customers or invoices…" autocomplete="off" />
+    <kbd aria-hidden="true">Ctrl K</kbd>
+  </form>
+
+  <div class="actions">
+    @if (meta().range) {
+      <app-date-range-picker />
+    }
+
+    <button type="button" class="btn btn-ghost btn-icon d-md-none" routerLink="/sales" aria-label="Search sales">
+      <i class="bi bi-search" aria-hidden="true"></i>
+    </button>
+
+    <button type="button" class="btn btn-ghost btn-icon" (click)="settings.toggleTheme()"
+            [attr.aria-label]="settings.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+            [attr.title]="settings.isDark() ? 'Light mode' : 'Dark mode'">
+      <i class="bi" [class.bi-sun]="settings.isDark()" [class.bi-moon-stars]="!settings.isDark()" aria-hidden="true"></i>
+    </button>
+
+    <!-- Notifications: derived from real data (pending sales, low stock) -->
+    <div class="pop" (appClickOutside)="closeMenu('notifications')">
+      <button type="button" class="btn btn-ghost btn-icon position-relative" (click)="toggleMenu('notifications')"
+              aria-haspopup="menu" [attr.aria-expanded]="openMenu() === 'notifications'"
+              [attr.aria-label]="'Notifications' + (notificationCount() ? ', ' + notificationCount() + ' new' : '')">
+        <i class="bi bi-bell" aria-hidden="true"></i>
+        @if (notificationCount()) {
+          <span class="badge-dot" aria-hidden="true">{{ notificationCount() }}</span>
+        }
+      </button>
+      @if (openMenu() === 'notifications') {
+        <div class="menu notif-menu" role="menu">
+          <div class="notif-head">
+            <span class="fw-semibold">Notifications</span>
+            <span class="pill">{{ notificationCount() }}</span>
+          </div>
+          @if (pendingSales().length) {
+            <a class="notif" routerLink="/sales" (click)="openMenu.set(null)">
+              <span class="notif-icon warn"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+              <span class="min-w-0">
+                <span class="notif-title">{{ pendingSales().length }} sales awaiting completion</span>
+                <span class="notif-sub">Latest: {{ pendingSales()[0].invoiceNumber }} · {{ pendingSales()[0].customerName }}
+                  · {{ pendingSales()[0].saleDate | date: 'dd MMM' : 'UTC' }}</span>
+              </span>
+            </a>
+          }
+          @for (p of lowStock().slice(0, 4); track p._id) {
+            <a class="notif" routerLink="/products" (click)="openMenu.set(null)">
+              <span class="notif-icon danger"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+              <span class="min-w-0">
+                <span class="notif-title">Low stock: {{ p.name }}</span>
+                <span class="notif-sub">{{ p.stock }} left · {{ p.price | currency: 'INR' : 'symbol' : '1.0-0' }} each</span>
+              </span>
+            </a>
+          }
+          @if (!notificationCount()) {
+            <div class="empty-state py-4"><i class="bi bi-bell-slash" aria-hidden="true"></i>You're all caught up.</div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="pop" (appClickOutside)="closeMenu('profile')">
+      <button type="button" class="profile-btn" (click)="toggleMenu('profile')" aria-haspopup="menu"
+              [attr.aria-expanded]="openMenu() === 'profile'" aria-label="Account menu">
+        <span class="avatar profile-avatar" aria-hidden="true">SA</span>
+        <i class="bi bi-chevron-down small text-secondary d-none d-sm-inline" aria-hidden="true"></i>
+      </button>
+      @if (openMenu() === 'profile') {
+        <div class="menu profile-menu" role="menu">
+          <div class="profile-head">
+            <span class="avatar profile-avatar" aria-hidden="true">SA</span>
+            <div class="min-w-0">
+              <div class="fw-semibold">Sales Admin</div>
+              <div class="small text-secondary">Local workspace</div>
+            </div>
+          </div>
+          <div class="menu-divider"></div>
+          <a class="menu-item" routerLink="/settings" role="menuitem" (click)="openMenu.set(null)"><i class="bi bi-gear"></i>Settings</a>
+          <a class="menu-item" routerLink="/reports" role="menuitem" (click)="openMenu.set(null)"><i class="bi bi-download"></i>Export reports</a>
+          <button type="button" class="menu-item" role="menuitem" (click)="settings.toggleTheme()">
+            <i class="bi" [class.bi-sun]="settings.isDark()" [class.bi-moon-stars]="!settings.isDark()"></i>
+            {{ settings.isDark() ? 'Light mode' : 'Dark mode' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

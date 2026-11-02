@@ -1,0 +1,147 @@
+<div class="modal-backdrop fade show"></div>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="sale-form-title">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <form class="modal-content border-0 shadow" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="modal-header">
+        <h5 class="modal-title" id="sale-form-title">
+          <i class="bi {{ isEdit ? 'bi-pencil-square' : 'bi-plus-circle' }} me-2 text-primary" aria-hidden="true"></i>
+          {{ isEdit ? 'Edit Sale ' + sale!.invoiceNumber : 'Add New Sale' }}
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cancel()" [disabled]="saving()"></button>
+      </div>
+
+      <div class="modal-body">
+        @if (serverError()) {
+          <div class="alert alert-danger py-2" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ serverError() }}
+          </div>
+        }
+
+        <h6 class="section-title">Customer</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-md-4">
+            <label for="customerName" class="form-label">Customer Name <span class="text-danger">*</span></label>
+            <input id="customerName" type="text" class="form-control" formControlName="customerName"
+                   [class.is-invalid]="invalid('customerName')" placeholder="e.g. Priya Sharma" />
+            <div class="invalid-feedback">
+              @if (form.controls.customerName.hasError('required')) { Customer name is required. }
+              @if (form.controls.customerName.hasError('maxlength')) { Maximum 100 characters. }
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="customerEmail" class="form-label">Customer Email <span class="text-danger">*</span></label>
+            <input id="customerEmail" type="email" class="form-control" formControlName="customerEmail"
+                   [class.is-invalid]="invalid('customerEmail')" placeholder="name@example.com" />
+            <div class="invalid-feedback">
+              @if (form.controls.customerEmail.hasError('required')) { Email is required. }
+              @else { Enter a valid email address. }
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="customerPhone" class="form-label">Customer Phone <span class="text-danger">*</span></label>
+            <input id="customerPhone" type="tel" class="form-control" formControlName="customerPhone"
+                   [class.is-invalid]="invalid('customerPhone')" placeholder="+91 98765 43210" />
+            <div class="invalid-feedback">
+              @if (form.controls.customerPhone.hasError('required')) { Phone is required. }
+              @else { Enter 7–15 digits; spaces, dashes and a leading + are allowed. }
+            </div>
+          </div>
+        </div>
+
+        <h6 class="section-title">Product &amp; Pricing</h6>
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-md-6">
+            <label for="productId" class="form-label">Product <span class="text-danger">*</span></label>
+            <select id="productId" class="form-select" formControlName="productId" [class.is-invalid]="invalid('productId')">
+              <option value="" disabled>Select a product</option>
+              @for (p of productOptions; track p._id) {
+                <option [value]="p._id">{{ p.name }} — {{ p.category }} ({{ p.price | currency: 'INR' }})</option>
+              }
+            </select>
+            <div class="invalid-feedback">Please select a product.</div>
+            @if (!productOptions.length) {
+              <div class="form-text text-warning">No active products found. Add products to the salesDashboard database.</div>
+            }
+          </div>
+          <div class="col-6 col-md-3">
+            <label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label>
+            <input id="quantity" type="number" min="1" step="1" class="form-control" formControlName="quantity"
+                   [class.is-invalid]="invalid('quantity')" />
+            <div class="invalid-feedback">Quantity must be a whole number greater than zero.</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <label for="unitPrice" class="form-label">Unit Price (₹)</label>
+            <input id="unitPrice" type="number" class="form-control" formControlName="unitPrice" />
+            <div class="form-text">From selected product</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label for="discount" class="form-label">Discount (₹)</label>
+            <input id="discount" type="number" min="0" step="0.01" class="form-control" formControlName="discount"
+                   [class.is-invalid]="invalid('discount') || (form.hasError('discountTooHigh') && form.controls.discount.dirty)" />
+            <div class="invalid-feedback">
+              @if (form.controls.discount.hasError('min')) { Discount cannot be negative. }
+              @else { Discount cannot exceed the subtotal. }
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <span class="form-label d-block">Subtotal</span>
+            <div class="form-control-plaintext fw-semibold">{{ subtotal() | currency: 'INR' }}</div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="totalAmount" class="form-label">Total Amount (₹)</label>
+            <input id="totalAmount" type="number" class="form-control fw-bold total-input" formControlName="totalAmount" />
+            <div class="form-text">Subtotal − Discount</div>
+          </div>
+        </div>
+
+        <h6 class="section-title">Payment &amp; Status</h6>
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label for="paymentMethod" class="form-label">Payment Method <span class="text-danger">*</span></label>
+            <select id="paymentMethod" class="form-select" formControlName="paymentMethod" [class.is-invalid]="invalid('paymentMethod')">
+              <option value="" disabled>Select method</option>
+              @for (m of paymentMethods; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+            <div class="invalid-feedback">Please select a payment method.</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label for="saleDate" class="form-label">Sale Date <span class="text-danger">*</span></label>
+            <input id="saleDate" type="date" class="form-control" formControlName="saleDate" [class.is-invalid]="invalid('saleDate')" />
+            <div class="invalid-feedback">Sale date is required.</div>
+          </div>
+          <div class="col-6 col-md-4">
+            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+            <select id="status" class="form-select" formControlName="status">
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ s }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-12">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea id="notes" rows="2" class="form-control" formControlName="notes" [class.is-invalid]="invalid('notes')"
+                      placeholder="Optional notes about this sale"></textarea>
+            <div class="invalid-feedback">Maximum 500 characters.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light me-auto" (click)="reset()" [disabled]="saving()">
+          <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Reset
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="cancel()" [disabled]="saving()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+          } @else {
+            <i class="bi bi-check-lg me-1" aria-hidden="true"></i>
+          }
+          {{ isEdit ? 'Update Sale' : 'Add Sale' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

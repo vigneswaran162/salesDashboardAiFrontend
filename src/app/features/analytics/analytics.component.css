@@ -1,0 +1,142 @@
+.share-col {
+  min-width: 180px;
+}
+
+.share {
+  width: 3rem;
+  text-align: right;
+}
+
+/* Table views (shared by the chart/table toggles) */
+.dt-wrap {
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid var(--sd-border);
+  border-radius: var(--sd-radius-sm);
+}
+
+.dt {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dt th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.65rem 0.9rem;
+  background: var(--sd-surface-2);
+  color: var(--sd-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: left;
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.dt th i {
+  margin-right: 0.4rem;
+  color: var(--sd-primary-text);
+}
+
+.dt td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--sd-border);
+  vertical-align: middle;
+}
+
+.dt tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.dt tbody tr {
+  transition: background 0.15s;
+}
+
+.dt tbody tr:hover {
+  background: var(--sd-hover);
+}
+
+.dt .num {
+  text-align: right;
+}
+
+.dt .strong {
+  font-weight: 600;
+}
+
+.dt .muted {
+  color: var(--sd-muted);
+}
+
+.dt tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: var(--sd-surface-2);
+  border-top: 1px solid var(--sd-border-strong);
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.bar-col {
+  min-width: 140px;
+  width: 38%;
+}
+
+.share-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sd-hover);
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sd-gradient);
+  transition: width 0.5s var(--sd-ease);
+}
+
+.pct {
+  width: 2.8rem;
+  text-align: right;
+  color: var(--sd-muted);
+  font-size: 0.78rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--sd-warning);
+  background: var(--sd-warning-soft);
+}
+
+.method-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 0.6rem;
+  border-radius: 8px;
+  color: var(--sd-primary-text);
+  background: var(--sd-primary-soft);
+}

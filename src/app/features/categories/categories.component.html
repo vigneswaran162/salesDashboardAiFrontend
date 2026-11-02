@@ -1,0 +1,65 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Categories</h1>
+      <p class="page-subtitle">How each product category performs in <strong class="text-body">{{ ranges.label().toLowerCase() }}</strong></p>
+    </div>
+  </div>
+
+  @if (analytics.error(); as err) {
+    <div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ err }}</div>
+  }
+
+  @if (!analytics.loaded()) {
+    <div class="row g-3" aria-hidden="true">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="col-12 col-md-6 col-xl-4"><div class="card" style="height: 200px; padding: 1rem"><div class="skeleton h-100"></div></div></div>
+      }
+    </div>
+  } @else if (!categories().length) {
+    <div class="card"><div class="empty-state"><span class="empty-icon"><i class="bi bi-tags"></i></span><strong>No categories yet</strong>Categories appear once products or sales exist.</div></div>
+  } @else {
+    <div class="row g-3 section-gap">
+      @for (c of categories(); track c.category; let i = $index) {
+        <div class="col-12 col-md-6 col-xl-4">
+          <article class="card card-hover cat-card h-100">
+            <header class="cat-head">
+              <span class="cat-swatch" [style.background]="c.color" aria-hidden="true"></span>
+              <h2 class="card-title flex-grow-1">{{ c.category }}</h2>
+              <span class="pill">#{{ i + 1 }}</span>
+            </header>
+            <div class="cat-revenue tabular">{{ c.revenue | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+            <div class="d-flex align-items-center gap-2 mb-3">
+              @if (c.delta !== null) {
+                <span class="pill" [class.pill-success]="c.delta >= 0" [class.pill-danger]="c.delta < 0">
+                  <i class="bi" [class.bi-arrow-up-right]="c.delta >= 0" [class.bi-arrow-down-right]="c.delta < 0" aria-hidden="true"></i>
+                  {{ c.delta >= 0 ? '+' : '' }}{{ c.delta | number: '1.0-1' }}%
+                </span>
+                <span class="small text-secondary">vs previous period</span>
+              } @else {
+                <span class="small text-secondary">{{ c.share | number: '1.0-1' }}% of revenue</span>
+              }
+            </div>
+            <div class="meter mb-3"><span [style.width.%]="c.share" [style.background]="c.color"></span></div>
+            <dl class="cat-stats">
+              <div><dt>Orders</dt><dd class="tabular">{{ c.orders }}</dd></div>
+              <div><dt>Units</dt><dd class="tabular">{{ c.units }}</dd></div>
+              <div><dt>Products</dt><dd class="tabular">{{ c.products }}</dd></div>
+            </dl>
+            <div class="cat-top"><i class="bi bi-trophy" aria-hidden="true"></i>Top seller: <strong>{{ c.topProduct }}</strong></div>
+          </article>
+        </div>
+      }
+    </div>
+
+    <app-panel title="Revenue by Category" [subtitle]="ranges.previous() ? 'This period compared with the previous period' : 'Completed-sales revenue'">
+      @if (ranges.previous()) {
+        <div class="legend mb-3">
+          <span class="legend-item"><span class="legend-swatch" style="background: var(--sd-primary)"></span>This period</span>
+          <span class="legend-item"><span class="legend-swatch" style="background: var(--sd-muted); opacity: .55"></span>Previous period</span>
+        </div>
+      }
+      <app-chart [config]="comparisonConfig()" [height]="300" ariaLabel="Bar chart of category revenue, this period vs previous" />
+    </app-panel>
+  }
+</div>

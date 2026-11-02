@@ -1,0 +1,109 @@
+.export-menu {
+  right: 0;
+  top: calc(100% + 6px);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--sd-border);
+}
+
+.toolbar-search {
+  flex: 1 1 280px;
+  max-width: 400px;
+}
+
+.toolbar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.toolbar-filters .form-select {
+  min-width: 140px;
+}
+
+.date-pair {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.date-pair .form-control {
+  width: 150px;
+}
+
+.table-wrapper {
+  position: relative;
+  min-height: 200px;
+}
+
+.loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 3;
+  overflow: hidden;
+  background: var(--sd-primary-soft);
+}
+
+.loading-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--sd-primary);
+  animation: loading-slide 1s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.sales-table.is-loading tbody {
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
+.btn-reset {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.btn-reset:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 767.98px) {
+  .toolbar-search {
+    max-width: none;
+  }
+
+  .toolbar-filters {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .toolbar-filters > div {
+    flex: 1 1 140px;
+  }
+
+  .date-pair .form-control {
+    width: auto;
+    flex: 1;
+  }
+}

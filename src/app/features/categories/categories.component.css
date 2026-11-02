@@ -1,0 +1,69 @@
+.cat-card {
+  padding: 1.2rem 1.25rem;
+}
+
+.cat-card:hover {
+  transform: translateY(-2px);
+}
+
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.cat-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.cat-revenue {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.35rem;
+}
+
+.cat-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+}
+
+.cat-stats div {
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--sd-radius-xs);
+  background: var(--sd-surface-2);
+  border: 1px solid var(--sd-border);
+}
+
+.cat-stats dt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--sd-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cat-stats dd {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.cat-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--sd-muted);
+}
+
+.cat-top strong {
+  color: var(--sd-text);
+  font-weight: 600;
+}
