@@ -5,11 +5,14 @@ import { Product } from '../../core/models/sales.models';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { DateRangeService } from '../../core/services/date-range.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { CategoryService } from '../../core/services/category.service';
 import { ProductService } from '../../core/services/product.service';
 import { byProduct, filterByRange } from '../../core/utils/analytics';
 import { ExportFormat, downloadTable } from '../../core/utils/export';
 import { getErrorMessage } from '../../core/utils/http-error';
+import { ConfirmationDialogComponent } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { PagerComponent } from '../../shared/components/pager/pager.component';
+import { ProductFormComponent } from './product-form.component';
 
 const LOW_STOCK = 10;
 
@@ -25,16 +28,22 @@ type SortKey = 'name' | 'category' | 'price' | 'stock' | 'units' | 'revenue';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [FormsModule, CurrencyPipe, DecimalPipe, PagerComponent],
+  imports: [FormsModule, CurrencyPipe, DecimalPipe, PagerComponent, ProductFormComponent, ConfirmationDialogComponent],
   templateUrl: './products.component.html',
 })
 export class ProductsComponent implements OnInit {
   private readonly productService = inject(ProductService);
+  private readonly categoryService = inject(CategoryService);
   private readonly notify = inject(NotificationService);
   readonly analytics = inject(AnalyticsService);
   readonly ranges = inject(DateRangeService);
 
   readonly products = signal<Product[]>([]);
+  readonly categoryNames = signal<string[]>([]);
+  readonly formOpen = signal(false);
+  readonly editing = signal<Product | null>(null);
+  readonly deleting = signal<Product | null>(null);
+  readonly deleteBusy = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -110,6 +119,62 @@ export class ProductsComponent implements OnInit {
   ngOnInit(): void {
     this.analytics.ensureLoaded();
     this.load();
+    this.loadCategories();
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getCategories().subscribe({
+      next: (cats) => this.categoryNames.set(cats.map((c) => c.name)),
+      error: () => undefined,
+    });
+  }
+
+  openAdd(): void {
+    this.editing.set(null);
+    this.formOpen.set(true);
+  }
+
+  openEdit(product: Product): void {
+    this.editing.set(product);
+    this.formOpen.set(true);
+  }
+
+  closeForm(): void {
+    this.formOpen.set(false);
+    this.editing.set(null);
+  }
+
+  onSaved(): void {
+    this.closeForm();
+    this.load();
+    this.loadCategories();
+  }
+
+  confirmDelete(product: Product): void {
+    this.deleting.set(product);
+  }
+
+  cancelDelete(): void {
+    if (!this.deleteBusy()) this.deleting.set(null);
+  }
+
+  deleteProduct(): void {
+    const product = this.deleting();
+    if (!product) return;
+    this.deleteBusy.set(true);
+    this.productService.deleteProduct(product._id).subscribe({
+      next: (res) => {
+        this.deleteBusy.set(false);
+        this.deleting.set(null);
+        this.notify.success(res.message || `${product.name} deleted`);
+        this.load();
+      },
+      error: (err) => {
+        this.deleteBusy.set(false);
+        this.deleting.set(null);
+        this.notify.error(getErrorMessage(err, 'Failed to delete the product.'));
+      },
+    });
   }
 
   load(): void {

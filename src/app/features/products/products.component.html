@@ -5,6 +5,7 @@
       <p class="page-subtitle">Catalogue, stock levels and sales performance for <strong class="text-body">{{ ranges.label().toLowerCase() }}</strong></p>
     </div>
     <div class="page-actions">
+      <button type="button" class="btn btn-primary" (click)="openAdd()"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add product</button>
       <button type="button" class="btn btn-soft" (click)="export('csv')" [disabled]="!filtered().length"><i class="bi bi-filetype-csv" aria-hidden="true"></i>CSV</button>
       <button type="button" class="btn btn-soft" (click)="export('xlsx')" [disabled]="!filtered().length"><i class="bi bi-file-earmark-excel" aria-hidden="true"></i>Excel</button>
     </div>
@@ -63,12 +64,13 @@
               </th>
             }
             <th scope="col">Status</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
           </tr>
         </thead>
         <tbody>
           @if (loading() && !products().length) {
             @for (i of [1, 2, 3, 4, 5]; track i) {
-              <tr aria-hidden="true"><td colspan="7"><div class="skeleton" style="height: 22px"></div></td></tr>
+              <tr aria-hidden="true"><td colspan="8"><div class="skeleton" style="height: 22px"></div></td></tr>
             }
           }
           @for (p of pageRows(); track p._id) {
@@ -100,18 +102,28 @@
                   <span class="pill pill-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i>In stock</span>
                 }
               </td>
+              <td class="text-end">
+                <div class="row-actions" role="group" [attr.aria-label]="'Actions for ' + p.name">
+                  <button type="button" class="row-action primary" title="Edit" (click)="openEdit(p)">
+                    <i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">Edit</span>
+                  </button>
+                  <button type="button" class="row-action danger" title="Delete" (click)="confirmDelete(p)">
+                    <i class="bi bi-trash3" aria-hidden="true"></i><span class="visually-hidden">Delete</span>
+                  </button>
+                </div>
+              </td>
             </tr>
           } @empty {
             @if (!loading()) {
               <tr>
-                <td colspan="7">
+                <td colspan="8">
                   <div class="empty-state">
                     <span class="empty-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
                     @if (products().length) {
                       <strong>No products match your filters</strong>
                     } @else {
                       <strong>No products in the catalogue</strong>
-                      Add products to the <code>products</code> collection in the salesDashboard database.
+                      <button type="button" class="btn btn-link btn-sm" (click)="openAdd()">Add your first product</button>
                     }
                   </div>
                 </td>
@@ -126,3 +138,18 @@
                (pageChange)="page.set($event)" (pageSizeChange)="setPageSize($event)" />
   </div>
 </div>
+
+@if (formOpen()) {
+  <app-product-form [product]="editing()" [categories]="categoryNames()" (saved)="onSaved()" (cancelled)="closeForm()" />
+}
+
+@if (deleting(); as product) {
+  <app-confirmation-dialog
+    title="Delete product?"
+    [message]="'&quot;' + product.name + '&quot; will be deleted. If it appears in existing sales it will be deactivated instead.'"
+    confirmText="Delete"
+    variant="danger"
+    [busy]="deleteBusy()"
+    (confirmed)="deleteProduct()"
+    (cancelled)="cancelDelete()" />
+}

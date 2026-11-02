@@ -117,3 +117,13 @@ export type RecentSale = Pick<
   Sale,
   '_id' | 'invoiceNumber' | 'customerName' | 'productName' | 'quantity' | 'totalAmount' | 'paymentMethod' | 'status' | 'saleDate'
 >;
+
+export interface Category {
+  _id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  productCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
