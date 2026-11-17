@@ -1,0 +1,30 @@
+@if (open()) {
+  <section class="chat-modal" role="dialog" aria-label="AI Assistant">
+    <header class="chat-head">
+      <span><i class="bi bi-stars"></i> AI Assistant</span>
+      <button type="button" class="chat-close" (click)="toggle()" aria-label="Close chat">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </header>
+
+    <div class="chat-body" #scroller>
+      @for (m of messages(); track $index) {
+        <div class="msg" [class.user]="m.role === 'user'">{{ m.text }}</div>
+      }
+      @if (loading()) {
+        <div class="msg typing">Thinking…</div>
+      }
+    </div>
+
+    <form class="chat-foot" (ngSubmit)="send()">
+      <input name="q" [(ngModel)]="input" placeholder="Ask a question…" autocomplete="off" [disabled]="loading()" />
+      <button type="submit" [disabled]="loading() || !input.trim()" aria-label="Send">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </form>
+  </section>
+}
+
+<button type="button" class="chat-fab" (click)="toggle()" [attr.aria-label]="open() ? 'Close chat' : 'Open chat'">
+  <i class="bi" [class.bi-chat-dots-fill]="!open()" [class.bi-x-lg]="open()"></i>
+</button>

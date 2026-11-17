@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SettingsService } from './core/services/settings.service';
 import { TopbarComponent } from './layout/topbar.component';
 import { NotificationComponent } from './shared/components/notification/notification.component';
+import { ChatWidgetComponent } from './shared/components/chat-widget/chat-widget.component';
 
 interface NavItem {
   path: string;
@@ -22,7 +23,7 @@ const MOBILE_QUERY = '(max-width: 991.98px)';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationComponent, TopbarComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationComponent, TopbarComponent, ChatWidgetComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
