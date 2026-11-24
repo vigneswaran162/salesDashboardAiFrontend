@@ -9,7 +9,12 @@
 
     <div class="chat-body" #scroller>
       @for (m of messages(); track $index) {
-        <div class="msg" [class.user]="m.role === 'user'">{{ m.text }}</div>
+        <div class="msg" [class.user]="m.role === 'user'">
+          {{ m.text }}
+          @if (m.pages?.length) {
+            <div class="sources"><i class="bi bi-file-earmark-text"></i> Policy manual, p. {{ m.pages!.join(', ') }}</div>
+          }
+        </div>
       }
       @if (loading()) {
         <div class="msg typing">Thinking…</div>

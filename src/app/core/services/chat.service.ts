@@ -6,6 +6,13 @@ import { environment } from '../../../environments/environment';
 export interface ChatTurn {
   role: 'user' | 'model';
   text: string;
+  pages?: number[];
+}
+
+export interface ChatReply {
+  success: boolean;
+  reply: string;
+  sources?: { page: number; source: string; score: number }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -13,7 +20,7 @@ export class ChatService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/chat`;
 
-  send(message: string, history: ChatTurn[]): Observable<{ success: boolean; reply: string }> {
-    return this.http.post<{ success: boolean; reply: string }>(this.baseUrl, { message, history });
+  send(message: string, history: ChatTurn[]): Observable<ChatReply> {
+    return this.http.post<ChatReply>(this.baseUrl, { message, history });
   }
 }

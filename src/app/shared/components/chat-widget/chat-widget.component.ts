@@ -29,14 +29,15 @@ export class ChatWidgetComponent implements AfterViewChecked {
     const text = this.input.trim();
     if (!text || this.loading()) return;
 
-    const history = this.messages().slice(1); // skip greeting
+    const history = this.messages().slice(1).map(({ role, text }) => ({ role, text })); // skip greeting
     this.messages.update((m) => [...m, { role: 'user', text }]);
     this.input = '';
     this.loading.set(true);
 
     this.chat.send(text, history).subscribe({
       next: (res) => {
-        this.messages.update((m) => [...m, { role: 'model', text: res.reply }]);
+        const pages = [...new Set((res.sources ?? []).map((s) => s.page))].sort((a, b) => a - b);
+        this.messages.update((m) => [...m, { role: 'model', text: res.reply, pages }]);
         this.loading.set(false);
       },
       error: (err) => {
